@@ -1,0 +1,4 @@
+Configuration,Processes,Execution_Time_s,Speedup_vs_Sequential
+Sequential,1,0.00196825,1.0
+MPI - 2 processes,2,0.002783,0.7072403880704277
+MPI - 4 processes,4,0.003888,0.5062371399176955
