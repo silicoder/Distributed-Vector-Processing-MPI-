@@ -1,15 +1,14 @@
-# Distributed Vector Processing using MPI
+# Parallel Vector Processing using OpenMP
 
 <p align="center">
   <img src="https://img.shields.io/badge/Language-C-blue?style=for-the-badge&logo=c" alt="C">
-  <img src="https://img.shields.io/badge/Parallel%20Computing-MPI-orange?style=for-the-badge" alt="MPI">
-  <img src="https://img.shields.io/badge/Implementation-Open%20MPI-red?style=for-the-badge" alt="Open MPI">
+  <img src="https://img.shields.io/badge/Parallel%20Computing-OpenMP-orange?style=for-the-badge" alt="OpenMP">
   <img src="https://img.shields.io/badge/OS-Ubuntu%2024.04-purple?style=for-the-badge&logo=ubuntu" alt="Ubuntu">
   <img src="https://img.shields.io/badge/Compiler-GCC%2013.3-green?style=for-the-badge&logo=gcc" alt="GCC">
 </p>
 
 <p align="center">
-  <b>A practical MPI experiment demonstrating workload distribution, local computation, reduction, correctness verification, and performance analysis for large-vector processing.</b>
+  <b>Parallel vector processing in C using OpenMP with correctness verification and performance analysis.</b>
 </p>
 
 ---
@@ -19,99 +18,86 @@
 - [Project Overview](#project-overview)
 - [Problem Statement](#problem-statement)
 - [Objectives](#objectives)
-- [Key Concepts Demonstrated](#key-concepts-demonstrated)
+- [Key Concepts](#key-concepts)
 - [Technology Stack](#technology-stack)
+- [OpenMP Overview](#openmp-overview)
 - [System Architecture](#system-architecture)
 - [Processing Methodology](#processing-methodology)
-- [MPI Program Flow](#mpi-program-flow)
-- [Sequential Implementation](#sequential-implementation)
-- [MPI Implementation](#mpi-implementation)
+- [Program Flow](#program-flow)
+- [Sequential Baseline](#sequential-baseline)
+- [OpenMP Implementation](#openmp-implementation)
 - [Experimental Setup](#experimental-setup)
 - [Performance Results](#performance-results)
 - [Speedup and Parallel Efficiency](#speedup-and-parallel-efficiency)
-- [Why More Processes Were Slower](#why-more-processes-were-slower)
+- [Why More Threads Were Slower](#why-more-threads-were-slower)
 - [Work Distribution](#work-distribution)
-- [Correctness Verification](#correctness-verification)
 - [Performance Graphs](#performance-graphs)
-- [Important Execution Screenshots](#important-execution-screenshots)
-- [Detailed Screenshot Evidence](#detailed-screenshot-evidence)
+- [Execution Screenshots](#execution-screenshots)
 - [Project Structure](#project-structure)
 - [How to Build and Run](#how-to-build-and-run)
-- [Reproducibility Procedure](#reproducibility-procedure)
+- [Reproducibility](#reproducibility)
 - [Results Interpretation](#results-interpretation)
 - [Limitations](#limitations)
 - [Future Improvements](#future-improvements)
 - [Learning Outcomes](#learning-outcomes)
+- [Viva Summary](#viva-summary)
 - [Conclusion](#conclusion)
-- [Author / Team](#author--team)
 
 ---
 
 ## Project Overview
 
-**Distributed Vector Processing using MPI** is a parallel-computing project implemented in **C using the Message Passing Interface (MPI)**.
+**Parallel Vector Processing using OpenMP** is a parallel-computing project implemented in **C using OpenMP**.
 
-The experiment demonstrates how a large vector can be divided into independent chunks and processed by multiple MPI processes. Each process receives a portion of the vector, performs a local computation, and contributes its partial result to a final global result using `MPI_Reduce()`.
+The project processes a large vector and compares a sequential implementation with a parallel OpenMP implementation using multiple threads. The vector-processing workload is divided among threads, the computation is performed concurrently, and the partial results are combined into a final sum.
 
-The project also contains a sequential implementation so that the team can compare:
+The experiment demonstrates an important principle of parallel computing:
 
-- execution on a single process,
-- MPI execution with 2 processes,
-- MPI execution with 3 processes, and
-- MPI execution with 4 processes.
+> **Increasing the number of threads does not automatically make a program faster.**
 
-The purpose is not simply to show that parallel execution is possible. The experiment also investigates an important practical principle of parallel computing:
-
-> **Increasing the number of processes does not automatically make a program faster.**
-
-For relatively small workloads running inside a single virtual machine, MPI communication, process creation, synchronization, memory movement, and reduction overhead can be greater than the time saved by dividing the computation.
+For the documented workload, the sequential implementation is faster than the tested 2-thread and 4-thread OpenMP executions. This result is useful because it shows the effect of parallelization overhead on a lightweight computation.
 
 ---
 
 ## Problem Statement
 
-Processing a large vector sequentially requires a single execution context to handle the complete workload. The objective of this project is to investigate how the same workload can be distributed across multiple processes using MPI and how that distribution affects execution time.
+Processing a large vector sequentially requires a single execution stream to perform the complete calculation. The objective of this project is to investigate how the same workload behaves when the computation is parallelized using OpenMP threads.
 
 ### Problem Definition
 
-> **Design and implement a distributed vector-processing application using MPI in C, where a large vector is divided among multiple processes, each process independently computes a local sum, and the local results are combined into a final global sum. Compare the distributed implementation with a sequential implementation and analyze the effect of process count on performance.**
+> **Design and implement a vector-processing application using OpenMP in C, where a large vector is processed in parallel by multiple threads, the partial results are combined into a final sum, and the performance is compared with a sequential implementation.**
 
 ---
 
 ## Objectives
 
-The project is designed to achieve the following objectives:
-
-1. Understand the basic architecture of MPI-based parallel programs.
-2. Initialize and terminate an MPI environment using `MPI_Init()` and `MPI_Finalize()`.
-3. Identify individual processes using `MPI_Comm_rank()`.
-4. Determine the total number of participating processes using `MPI_Comm_size()`.
-5. Divide a large vector into smaller workloads.
-6. Distribute vector segments among MPI processes using `MPI_Scatter()`.
-7. Perform local computation independently on each process.
-8. Aggregate local results using `MPI_Reduce()`.
-9. Verify that sequential and distributed executions produce the same result.
-10. Measure execution time and compare different process configurations.
-11. Calculate speedup and parallel efficiency.
-12. Explain why communication and process overhead can reduce performance for small workloads.
+1. Understand the OpenMP shared-memory programming model.
+2. Create and execute parallel regions using OpenMP.
+3. Divide vector-processing work among multiple threads.
+4. Perform vector computation concurrently.
+5. Combine partial results using an OpenMP reduction operation.
+6. Verify that sequential and parallel executions produce the same result.
+7. Measure execution time for different thread counts.
+8. Calculate speedup and parallel efficiency.
+9. Analyze the effect of thread and synchronization overhead.
+10. Understand why more threads do not automatically guarantee better performance.
 
 ---
 
-## Key Concepts Demonstrated
+## Key Concepts
 
-| Concept | Demonstration in this Project |
+| Concept | Demonstration in This Project |
 |---|---|
-| Process creation | MPI launches multiple independent processes |
-| Process identification | `MPI_Comm_rank()` |
-| Process count | `MPI_Comm_size()` |
-| Data distribution | `MPI_Scatter()` |
-| Local computation | Each process sums its assigned vector segment |
-| Global aggregation | `MPI_Reduce()` with a sum operation |
-| Synchronization / coordination | MPI collective operations |
-| Performance measurement | Sequential and MPI execution times |
-| Correctness verification | Matching global sum |
-| Scalability analysis | Comparison across process counts |
-| Parallel efficiency | Speedup divided by process count |
+| Parallel programming | OpenMP-based execution in C |
+| Threads | Multiple OpenMP threads process the workload |
+| Shared memory | Threads operate within the same address space |
+| Work sharing | Vector loop iterations are divided among threads |
+| Parallel loop | Multiple iterations are executed concurrently |
+| Reduction | Partial sums are safely combined |
+| Correctness verification | Sequential and parallel results are compared |
+| Performance measurement | Execution times are recorded |
+| Scalability | Different thread counts are compared |
+| Parallel efficiency | Speedup is related to thread count |
 
 ---
 
@@ -120,20 +106,41 @@ The project is designed to achieve the following objectives:
 | Component | Technology / Version |
 |---|---|
 | Programming Language | C |
-| Parallel Programming Model | MPI |
-| MPI Implementation | Open MPI 4.1.6 |
-| C Compiler | GCC 13.3.0 |
+| Parallel Programming Model | OpenMP |
+| Compiler | GCC 13.3.0 |
 | Operating System | Ubuntu 24.04 |
-| Virtualization | VMware Workstation |
-| MPI Compiler Wrapper | `mpicc` |
-| MPI Launcher | `mpirun` |
+| Execution Environment | VMware Workstation |
+| OpenMP Compiler Flag | `-fopenmp` |
 | Repository | GitHub |
 
-### MPI vs Open MPI
+---
 
-MPI is the **standard/API/programming model** used by the application. **Open MPI** is an implementation of that standard that supplies tools such as `mpicc` and `mpirun`.
+## OpenMP Overview
 
-Therefore, this remains an **MPI project implemented using Open MPI**.
+OpenMP is a **shared-memory parallel programming model** that allows a C/C++ program to execute selected parts of its workload using multiple threads.
+
+In this project:
+
+- One application runs with multiple OpenMP threads.
+- Threads share the same memory.
+- The vector-processing loop is divided among the threads.
+- Each thread processes its assigned iterations.
+- A reduction operation combines the partial sums.
+- The number of threads can be controlled through `OMP_NUM_THREADS`.
+
+The project follows this basic pattern:
+
+```text
+Threads
+   ↓
+Work Sharing
+   ↓
+Parallel Computation
+   ↓
+Reduction
+   ↓
+Final Result
+```
 
 ---
 
@@ -143,50 +150,50 @@ Therefore, this remains an **MPI project implemented using Open MPI**.
                          LARGE VECTOR
                               |
                               v
-                    +---------------------+
-                    |     MPI Process 0   |
-                    | Distribution / Root |
-                    +----------+----------+
+                    +----------------------+
+                    |   OpenMP Parallel    |
+                    |        Region        |
+                    +----------+-----------+
                                |
-                          MPI_Scatter
+                +--------------+--------------+
+                |              |              |
+                v              v              v
+          +-----------+  +-----------+  +-----------+
+          | Thread 0  |  | Thread 1  |  | Thread 2  | ... Thread N
+          | Vector    |  | Vector    |  | Vector    |
+          | Iterations|  | Iterations|  | Iterations|
+          | Partial   |  | Partial   |  | Partial   |
+          | Sum       |  | Sum       |  | Sum       |
+          +-----+-----+  +-----+-----+  +-----+-----+
+                \              |              /
+                 \             |             /
+                  +------------+-------------+
                                |
-          +--------------------+--------------------+
-          |                    |                    |
-          v                    v                    v
-   +-------------+      +-------------+      +-------------+
-   |   Process 0 |      |   Process 1 |      |   Process 2 |  ... Process N
-   | Vector Chunk|      | Vector Chunk|      | Vector Chunk|
-   | Local Sum   |      | Local Sum   |      | Local Sum   |
-   +------+------+      +------+------+      +------+------+
-          \                    |                    /
-           \___________________|___________________/
-                               |
-                          MPI_Reduce
+                           Reduction
                                |
                                v
-                    +---------------------+
-                    |     Global Sum      |
-                    |    Process 0        |
-                    +---------------------+
+                         +-----------+
+                         | Final Sum |
+                         +-----------+
 ```
 
-The architecture separates the application into two logical stages:
+The system has two main stages:
 
-**Stage 1 — Distribution:** the vector workload is divided and delivered to participating processes.
+**Stage 1 — Parallel Computation:** OpenMP divides the vector-processing iterations among threads.
 
-**Stage 2 — Aggregation:** each process calculates its partial result and the partial results are combined into one final answer.
+**Stage 2 — Reduction:** the partial sums are combined safely to produce the final result.
 
 ---
 
 ## Processing Methodology
 
-The vector used for the demonstrated experiment contains:
+The documented experiment uses:
 
 ```text
 Vector size = 1,000,000 elements
 ```
 
-The test vector contains the values from `1` through `1,000,000`.
+The input vector contains the values from `1` through `1,000,000`.
 
 The expected sum is:
 
@@ -194,93 +201,68 @@ The expected sum is:
 1 + 2 + 3 + ... + 1,000,000 = 500000500000
 ```
 
-This known value provides a simple and reliable way to verify correctness.
+This known value provides a simple and reliable correctness check.
 
 ### Sequential Approach
-
-The sequential program performs the entire calculation in one execution context:
 
 ```text
 Vector
   |
   v
-Single process
+Single execution stream
   |
   v
-Sum all 1,000,000 elements
+Process all 1,000,000 elements
   |
   v
-Final result
+Final Sum
 ```
 
-### MPI Approach
-
-The MPI program divides the workload among processes:
+### OpenMP Approach
 
 ```text
 1,000,000 elements
         |
-        +------------------------------+
-        |                              |
-   2 processes                     4 processes
-        |                              |
-  500,000 each                   250,000 each
-        |                              |
- Local computation               Local computation
-        |                              |
-        +-----------+------------------+
-                    |
-               MPI_Reduce
-                    |
-                    v
-              Global result
+        +-----------------------------+
+        |                             |
+   2 threads                     4 threads
+        |                             |
+  ~500,000 each                 ~250,000 each
+        |                             |
+  Parallel computation        Parallel computation
+        |                             |
+        +--------------+--------------+
+                       |
+                   Reduction
+                       |
+                       v
+                   Final Sum
 ```
 
----
-
-## MPI Program Flow
-
-The main MPI implementation follows this execution sequence:
-
-1. **`MPI_Init()`**
-   - Starts the MPI runtime environment.
-
-2. **`MPI_Comm_rank()`**
-   - Determines the rank/ID of the current process.
-   - Rank `0` is normally treated as the root process.
-
-3. **`MPI_Comm_size()`**
-   - Determines how many MPI processes are participating.
-
-4. **Vector creation**
-   - The root process prepares the large input vector.
-
-5. **Work partitioning**
-   - The vector is divided into equal-size chunks for the tested process counts.
-
-6. **`MPI_Scatter()`**
-   - Each process receives its assigned portion.
-
-7. **Local computation**
-   - Each process calculates the sum of its local chunk.
-
-8. **`MPI_Reduce()`**
-   - Local sums are combined using the `MPI_SUM` reduction operation.
-
-9. **Result validation**
-   - Rank `0` prints the global sum.
-
-10. **Timing**
-    - The elapsed time is measured to compare sequential and parallel configurations.
-
-11. **`MPI_Finalize()`**
-    - Closes the MPI environment cleanly.
+The exact loop-iteration assignment is handled by OpenMP's work-sharing mechanism.
 
 ---
 
-## Sequential Implementation
+## Program Flow
 
-The sequential program processes all **1,000,000 elements** using one process.
+The OpenMP implementation follows this sequence:
+
+1. Prepare the vector containing `1,000,000` elements.
+2. Start the execution timer.
+3. Create the OpenMP parallel region.
+4. Divide the vector-processing loop among the available threads.
+5. Compute partial sums concurrently.
+6. Combine the partial sums using reduction.
+7. Stop the timer.
+8. Verify the final result.
+9. Repeat the experiment using different thread counts.
+10. Compare the sequential and parallel execution times.
+
+---
+
+## Sequential Baseline
+
+The sequential program processes all **1,000,000 elements** without parallelization.
 
 ### Measured Runs
 
@@ -299,87 +281,84 @@ Vector Size : 1000000
 Total Sum   : 500000500000
 ```
 
-### Sequential Execution Evidence
+### Sequential Execution Screenshot
 
 <p align="center">
   <img src="screenshots/sequential_execution.jpeg" alt="Sequential execution output" width="900">
 </p>
 
-*Figure 1 — Sequential execution of the vector-processing program.*
+*Figure 1 — Sequential execution and baseline result.*
 
 ---
 
-## MPI Implementation
+## OpenMP Implementation
 
-### 2-Process Execution
+### 2-Thread Execution
 
-For the 2-process configuration:
-
-```text
-Vector Size         : 1000000
-Number of Processes : 2
-Elements per Process: 500000
-Total Vector Sum    : 500000500000
-Parallel Time       : 0.002783 seconds
-```
-
-Each participating process handles approximately **500,000 elements**.
-
-<p align="center">
-  <img src="screenshots/mpi_2_process.jpeg" alt="MPI execution with 2 processes" width="900">
-</p>
-
-*Figure 2 — MPI execution using 2 processes.*
-
-### 3-Process Execution
-
-The project also includes a 3-process execution screenshot as additional evidence that the application can be launched with an intermediate process count.
-
-<p align="center">
-  <img src="screenshots/mpi_3_processes.jpeg" alt="MPI execution with 3 processes" width="900">
-</p>
-
-*Figure 3 — MPI execution using 3 processes.*
-
-### 4-Process Execution
-
-For the 4-process configuration:
+For the 2-thread configuration:
 
 ```text
-Vector Size         : 1000000
-Number of Processes : 4
-Elements per Process: 250000
-Total Vector Sum    : 500000500000
-Parallel Time       : 0.003888 seconds
+Vector Size          : 1000000
+Number of Threads    : 2
+Elements per Thread  : ~500000
+Total Vector Sum     : 500000500000
+Parallel Time        : 0.002783 seconds
 ```
 
-Each participating process handles approximately **250,000 elements**.
-
 <p align="center">
-  <img src="screenshots/mpi_4_processes.jpeg" alt="MPI execution with 4 processes" width="900">
+  <img src="screenshots/mpi_2_process.jpeg" alt="OpenMP execution using 2 threads" width="900">
 </p>
 
-*Figure 4 — MPI execution using 4 processes.*
+*Figure 2 — OpenMP execution using 2 threads.*
+
+> The repository may still contain the original filename `mpi_2_process.jpeg`. The execution represented here should be the OpenMP version.
+
+### 3-Thread Execution
+
+The project also includes evidence for execution using 3 threads.
+
+<p align="center">
+  <img src="screenshots/mpi_3_processes.jpeg" alt="OpenMP execution using 3 threads" width="900">
+</p>
+
+*Figure 3 — OpenMP execution using 3 threads.*
+
+### 4-Thread Execution
+
+For the 4-thread configuration:
+
+```text
+Vector Size          : 1000000
+Number of Threads    : 4
+Elements per Thread  : ~250000
+Total Vector Sum     : 500000500000
+Parallel Time        : 0.003888 seconds
+```
+
+<p align="center">
+  <img src="screenshots/mpi_4_processes.jpeg" alt="OpenMP execution using 4 threads" width="900">
+</p>
+
+*Figure 4 — OpenMP execution using 4 threads.*
 
 ---
 
 ## Experimental Setup
 
-The documented experiment was performed using the following environment:
-
 | Parameter | Configuration |
 |---|---|
-| OS | Ubuntu 24.04 |
-| Execution environment | VMware Workstation virtual machine |
-| MPI implementation | Open MPI 4.1.6 |
-| C compiler | GCC 13.3.0 |
-| Dataset size | 1,000,000 elements |
-| Sequential processes | 1 |
-| Parallel configurations | 2, 3 and 4 processes |
-| Aggregation operation | `MPI_SUM` |
-| Primary result | Total vector sum |
+| Operating System | Ubuntu 24.04 |
+| Execution Environment | VMware Workstation |
+| Compiler | GCC 13.3.0 |
+| Programming Language | C |
+| Parallel Model | OpenMP |
+| Dataset Size | 1,000,000 elements |
+| Sequential Configuration | 1 execution stream |
+| Parallel Configurations | 2, 3 and 4 threads |
+| Primary Operation | Vector sum |
+| Expected Result | `500000500000` |
 
-> **Experimental note:** The recorded timings represent the configured VMware/Ubuntu environment and should be treated as experimental observations rather than universal performance benchmarks. CPU allocation, virtualization overhead, operating-system load, compiler optimization level, memory subsystem, and MPI configuration can all change the measured results.
+> **Experimental note:** The recorded timings are observations from the specified Ubuntu/VMware environment. They are not universal benchmark values. CPU resources, compiler settings, system load, VM configuration, memory behavior, and other factors can change the measured times.
 
 ---
 
@@ -387,27 +366,23 @@ The documented experiment was performed using the following environment:
 
 ### Recorded Execution Times
 
-The values below are the documented measurements used for the performance analysis.
-
-| Configuration | Processes | Work per Process | Execution Time (s) |
+| Configuration | Threads | Approx. Work / Thread | Execution Time (s) |
 |---|---:|---:|---:|
 | Sequential | 1 | 1,000,000 | **0.001968** average |
-| MPI | 2 | 500,000 | **0.002783** |
-| MPI | 4 | 250,000 | **0.003888** |
+| OpenMP | 2 | 500,000 | **0.002783** |
+| OpenMP | 4 | 250,000 | **0.003888** |
 
-### Performance Interpretation
-
-The measured execution time increased as the number of MPI processes increased:
+### Performance Observation
 
 ```text
 Sequential : 0.001968 s
-2 MPI      : 0.002783 s
-4 MPI      : 0.003888 s
+2 threads  : 0.002783 s
+4 threads  : 0.003888 s
 ```
 
-For this specific test, the sequential implementation is the fastest of the measured configurations.
+For this particular workload, the sequential implementation is the fastest of the measured configurations.
 
-This does **not** indicate that MPI is ineffective. Instead, it demonstrates that parallel-performance gains depend on workload size and the ratio between useful computation and parallelization overhead.
+This does **not** mean OpenMP is ineffective. It demonstrates that the workload is lightweight enough that the overhead of parallel execution is greater than the time saved by dividing the work.
 
 ---
 
@@ -415,112 +390,110 @@ This does **not** indicate that MPI is ineffective. Instead, it demonstrates tha
 
 ### Speedup Formula
 
-Speedup is defined as:
-
 ```text
 Speedup = Sequential Time / Parallel Time
 ```
 
-### 2-Process Speedup
+### 2-Thread Speedup
 
 ```text
 Sequential average = 0.001968 s
-2-process time     = 0.002783 s
+2-thread time      = 0.002783 s
 
 Speedup = 0.001968 / 0.002783
-        ≈ 0.707
+        ≈ 0.707×
 ```
 
-### 4-Process Speedup
+### 4-Thread Speedup
 
 ```text
 Sequential average = 0.001968 s
-4-process time     = 0.003888 s
+4-thread time      = 0.003888 s
 
 Speedup = 0.001968 / 0.003888
-        ≈ 0.506
+        ≈ 0.506×
 ```
 
 ### Parallel Efficiency
 
-Parallel efficiency is calculated as:
-
 ```text
-Parallel Efficiency = Speedup / Number of Processes × 100
+Parallel Efficiency = Speedup / Number of Threads × 100
 ```
-
-Therefore:
 
 | Configuration | Speedup | Parallel Efficiency |
 |---|---:|---:|
-| 2 MPI processes | 0.707 | **35.36%** |
-| 4 MPI processes | 0.506 | **12.65%** |
+| 2 threads | 0.707× | **35.36%** |
+| 4 threads | 0.506× | **12.65%** |
 
-A speedup lower than `1.0` means the measured parallel version took longer than the sequential version.
+A speedup below `1.0×` means that the measured parallel execution took longer than the sequential baseline.
 
 ---
 
-## Why More Processes Were Slower
+## Why More Threads Were Slower
 
-The observed result is an important part of the experiment.
-
-At first glance, one might expect:
+A common assumption is:
 
 ```text
-More processes
-      ↓
-Less work per process
-      ↓
-Lower execution time
+More Threads
+     ↓
+Less Work per Thread
+     ↓
+Lower Execution Time
 ```
 
-That expectation is incomplete because parallel programs have overhead.
-
-A more realistic model is:
+In practice, parallel execution also has overhead:
 
 ```text
-Total Parallel Time
+Parallel Execution Time
         =
 Useful Computation
 +
-Process / Runtime Overhead
+Thread Runtime Overhead
 +
-Data Distribution
-+
-Communication
+Work Scheduling
 +
 Synchronization
 +
 Reduction
 +
+Memory / Cache Effects
++
 Virtualization / System Overhead
 ```
 
-For a vector of only one million simple additions, the actual arithmetic is extremely cheap. The cost of creating/managing multiple processes and coordinating them can therefore exceed the savings from splitting the work.
+For one million simple additions, the actual computation is very lightweight. Therefore, the cost of managing multiple threads can outweigh the benefit of parallel execution.
 
-### Major reasons in this experiment
+### Main Reasons
 
-**1. Small computational workload**  
-The vector operation is simple integer addition. There is very little computation per element.
+**1. Lightweight computation**
 
-**2. MPI communication overhead**  
-Collective operations such as `MPI_Scatter()` and `MPI_Reduce()` require coordination between processes.
+The vector operation is a simple sum, so the amount of computation per element is very small.
 
-**3. Process-management overhead**  
-Launching multiple processes has a cost.
+**2. Thread management overhead**
 
-**4. Synchronization overhead**  
-Processes must participate in the required collective operations before the program can proceed.
+OpenMP must create and manage the worker threads and the parallel region.
 
-**5. Virtual machine overhead**  
-The experiment runs inside VMware rather than directly on the physical host. Virtualization can add additional runtime overhead and resource contention.
+**3. Scheduling and synchronization**
 
-**6. Memory and cache behavior**  
-A sequential implementation can benefit from very efficient local memory access, while the distributed version introduces additional buffers and data movement.
+Threads must coordinate before the final result is completed.
 
-### Important conclusion
+**4. Reduction overhead**
 
-> The experiment successfully demonstrates that **parallelism and speedup are different concepts**. MPI provides a mechanism for distributing work, but speedup depends on whether the workload is large enough to justify the overhead of parallel execution.
+The partial sums must be combined safely.
+
+**5. Virtual machine overhead**
+
+The experiment runs inside VMware, where resource allocation and scheduling can affect very short executions.
+
+**6. Memory and cache behavior**
+
+Sequential execution can be extremely efficient for a simple contiguous traversal, while parallel execution introduces additional coordination and runtime activity.
+
+### Main Lesson
+
+> **Parallelism does not automatically mean speedup.**
+
+A workload needs enough computation to justify the overhead introduced by parallel execution.
 
 ---
 
@@ -528,215 +501,198 @@ A sequential implementation can benefit from very efficient local memory access,
 
 For a vector containing 1,000,000 elements:
 
-| Number of Processes | Approx. Elements / Process | Distribution |
-|---:|---:|---|
-| 1 | 1,000,000 | Entire vector handled by one process |
-| 2 | 500,000 | Vector split into 2 equal chunks |
-| 4 | 250,000 | Vector split into 4 equal chunks |
+| Number of Threads | Approx. Elements / Thread |
+|---:|---:|
+| 1 | 1,000,000 |
+| 2 | 500,000 |
+| 4 | 250,000 |
 
 Conceptually:
 
 ```text
-1 Process:
+1 Thread:
 [------------------------------------------------------------]
-                 1,000,000 elements
+                     1,000,000 elements
 
-2 Processes:
+2 Threads:
 [------------------------------][------------------------------]
-          500,000                      500,000
+          ~500,000                      ~500,000
 
-4 Processes:
+4 Threads:
 [---------------][---------------][---------------][---------------]
-     250,000          250,000          250,000          250,000
+   ~250,000          ~250,000          ~250,000          ~250,000
 ```
 
-The amount of arithmetic assigned to each process decreases as the number of processes increases. However, the total program also incurs more coordination overhead.
+The amount of arithmetic handled by each thread decreases as the thread count increases. However, the total program still includes the cost of creating, scheduling, synchronizing, and reducing the parallel work.
 
 ---
 
 ## Performance Graphs
 
-The repository contains the performance visualizations generated from the documented measurements.
+The original project includes three performance graphs. They are retained here and interpreted using OpenMP terminology.
 
-### 1. Sequential vs MPI Execution Time
+### 1. Sequential vs OpenMP Execution Time
 
 <p align="center">
-  <img src="graphs/execution_time_comparison.png" alt="Execution time comparison graph" width="850">
+  <img src="graphs/execution_time_comparison.png" alt="Sequential versus OpenMP execution time comparison" width="850">
 </p>
 
-**Interpretation:** The measured sequential run has the lowest execution time. The 2-process and 4-process MPI runs take longer for this workload and environment.
+**Interpretation:** The sequential implementation has the lowest measured execution time, while the 2-thread and 4-thread OpenMP configurations take longer for this workload.
 
 ### 2. Observed Speedup
 
 <p align="center">
-  <img src="graphs/speedup.png" alt="Speedup graph" width="850">
+  <img src="graphs/speedup.png" alt="OpenMP speedup graph" width="850">
 </p>
 
-**Interpretation:** Both parallel configurations have speedup values below `1.0`, meaning the observed executions were slower than the sequential baseline.
+**Interpretation:** Both measured OpenMP configurations have speedup values below `1.0×`, indicating that they were slower than the sequential baseline.
 
 ### 3. Work Distribution
 
 <p align="center">
-  <img src="graphs/work_distribution.png" alt="Work distribution graph" width="850">
+  <img src="graphs/work_distribution.png" alt="OpenMP work distribution graph" width="850">
 </p>
 
-**Interpretation:** Increasing process count reduces the number of vector elements handled by each individual process.
+**Interpretation:** Increasing the thread count reduces the approximate number of vector elements handled by each individual thread.
 
 ---
 
-## Important Execution Screenshots
+## Execution Screenshots
 
-The README intentionally places the most important evidence next to the sections where it is discussed. This makes it easy for a reviewer or instructor to verify the experiment without navigating through the repository manually.
+All screenshots from the original project are retained below so the README contains the complete experimental evidence.
 
-### A. Sequential Baseline
-
-This screenshot establishes the single-process baseline and shows the correct vector sum and timing information.
+### 1. Sequential Execution
 
 <p align="center">
-  <img src="screenshots/sequential_execution.jpeg" alt="Sequential baseline evidence" width="950">
+  <img src="screenshots/sequential_execution.jpeg" alt="Sequential execution" width="950">
 </p>
 
-### B. MPI with 2 Processes
-
-This screenshot provides evidence of distributed execution with two MPI processes and the associated timing.
+### 2. OpenMP — 2 Threads
 
 <p align="center">
-  <img src="screenshots/mpi_2_process.jpeg" alt="MPI 2 process evidence" width="950">
+  <img src="screenshots/mpi_2_process.jpeg" alt="OpenMP 2-thread execution" width="950">
 </p>
 
-### C. MPI with 3 Processes
-
-This screenshot demonstrates that the same application can be executed with three MPI processes.
+### 3. OpenMP — 3 Threads
 
 <p align="center">
-  <img src="screenshots/mpi_3_processes.jpeg" alt="MPI 3 process evidence" width="950">
+  <img src="screenshots/mpi_3_processes.jpeg" alt="OpenMP 3-thread execution" width="950">
 </p>
 
-### D. MPI with 4 Processes
-
-This is the second primary performance configuration used in the documented comparison.
+### 4. OpenMP — 4 Threads
 
 <p align="center">
-  <img src="screenshots/mpi_4_processes.jpeg" alt="MPI 4 process evidence" width="950">
+  <img src="screenshots/mpi_4_processes.jpeg" alt="OpenMP 4-thread execution" width="950">
 </p>
 
-### E. Performance Test Evidence
-
-This screenshot records the performance-testing phase and supports the values discussed in the performance section.
+### 5. Performance Test
 
 <p align="center">
   <img src="screenshots/performance_test.jpeg" alt="Performance test evidence" width="950">
 </p>
 
-### F. Sequential vs Distributed Comparison
-
-This screenshot visually demonstrates the comparison between sequential and distributed processing runs.
+### 6. Sequential vs OpenMP Processing
 
 <p align="center">
-  <img src="screenshots/sequential_vs_distributed_processing.jpeg" alt="Sequential versus distributed processing evidence" width="950">
+  <img src="screenshots/sequential_vs_distributed_processing.jpeg" alt="Sequential versus OpenMP processing comparison" width="950">
 </p>
 
-### G. Final MPI Results
-
-This screenshot provides a consolidated view of MPI result verification.
+### 7. OpenMP Results
 
 <p align="center">
-  <img src="screenshots/mpi_results.jpeg" alt="Final MPI results evidence" width="950">
+  <img src="screenshots/mpi_results.jpeg" alt="OpenMP result verification" width="950">
 </p>
 
----
+### 8. Vector Distribution — 1 Thread
 
-## Detailed Screenshot Evidence
+<p align="center">
+  <img src="screenshots/distributed_vector_1_processes.jpeg" alt="Vector distribution using 1 thread" width="850">
+</p>
 
-The remaining screenshots are retained in the repository as experiment evidence and can be opened directly from GitHub.
+### 9. Vector Distribution — 2 Threads
+
+<p align="center">
+  <img src="screenshots/distributed_vector_2_processes.jpeg" alt="Vector distribution using 2 threads" width="850">
+</p>
+
+### 10. Vector Distribution — 4 Threads
+
+<p align="center">
+  <img src="screenshots/distributed_vector_4_processes.jpeg" alt="Vector distribution using 4 threads" width="850">
+</p>
+
+### 11. Parallel Time — 1 Thread
+
+<p align="center">
+  <img src="screenshots/parallel_time_1_process.jpeg" alt="Parallel timing using 1 thread" width="850">
+</p>
+
+### 12. Parallel Time — 2 Threads
+
+<p align="center">
+  <img src="screenshots/parallel_time_2_process.jpeg" alt="Parallel timing using 2 threads" width="850">
+</p>
+
+### 13. Parallel Time — 4 Threads
+
+<p align="center">
+  <img src="screenshots/parallel_time_4_process.jpeg" alt="Parallel timing using 4 threads" width="850">
+</p>
+
+### 14. Sequential vs Parallel Timing
+
+<p align="center">
+  <img src="screenshots/comparing_sequential_&_parallel-time.jpeg" alt="Sequential and OpenMP timing comparison" width="850">
+</p>
+
+### 15. Files Created During the Experiment
+
+<p align="center">
+  <img src="screenshots/files_created.jpeg" alt="Project files created during the experiment" width="850">
+</p>
+
+### 16. Additional Terminal Evidence
+
+<p align="center">
+  <img src="screenshots/nameless.jpeg" alt="Additional terminal experiment evidence" width="850">
+</p>
+
+### Screenshot Reference Table
 
 | Screenshot | Purpose |
 |---|---|
-| `sequential_execution.jpeg` | Sequential execution and baseline result |
-| `mpi_2_process.jpeg` | MPI execution with 2 processes |
-| `mpi_3_processes.jpeg` | MPI execution with 3 processes |
-| `mpi_4_processes.jpeg` | MPI execution with 4 processes |
+| `sequential_execution.jpeg` | Sequential execution and baseline |
+| `mpi_2_process.jpeg` | OpenMP execution with 2 threads |
+| `mpi_3_processes.jpeg` | OpenMP execution with 3 threads |
+| `mpi_4_processes.jpeg` | OpenMP execution with 4 threads |
 | `performance_test.jpeg` | Performance-testing evidence |
-| `sequential_vs_distributed_processing.jpeg` | Sequential/distributed comparison |
-| `mpi_results.jpeg` | MPI result verification |
-| `distributed_vector_1_processes.jpeg` | One-process vector distribution evidence |
-| `distributed_vector_2_processes.jpeg` | Two-process workload distribution |
-| `distributed_vector_4_processes.jpeg` | Four-process workload distribution |
-| `parallel_time_1_process.jpeg` | One-process timing evidence |
-| `parallel_time_2_process.jpeg` | Two-process timing evidence |
-| `parallel_time_4_process.jpeg` | Four-process timing evidence |
-| `comparing_sequential_&_parallel-time.jpeg` | Sequential and parallel timing comparison |
-| `files_created.jpeg` | Project/output files created during the experiment |
-| `nameless.jpeg` | Additional terminal/experiment evidence |
+| `sequential_vs_distributed_processing.jpeg` | Sequential vs OpenMP comparison |
+| `mpi_results.jpeg` | Final result verification |
+| `distributed_vector_1_processes.jpeg` | Work distribution with 1 thread |
+| `distributed_vector_2_processes.jpeg` | Work distribution with 2 threads |
+| `distributed_vector_4_processes.jpeg` | Work distribution with 4 threads |
+| `parallel_time_1_process.jpeg` | Timing evidence with 1 thread |
+| `parallel_time_2_process.jpeg` | Timing evidence with 2 threads |
+| `parallel_time_4_process.jpeg` | Timing evidence with 4 threads |
+| `comparing_sequential_&_parallel-time.jpeg` | Sequential vs parallel timing |
+| `files_created.jpeg` | Project files and experiment setup |
+| `nameless.jpeg` | Additional terminal evidence |
 
-### Additional Evidence Gallery
-
-<details>
-<summary><b>Show additional distribution and timing screenshots</b></summary>
-
-#### Distribution — 1 Process
-
-<p align="center">
-  <img src="screenshots/distributed_vector_1_processes.jpeg" alt="Distributed vector with 1 process" width="850">
-</p>
-
-#### Distribution — 2 Processes
-
-<p align="center">
-  <img src="screenshots/distributed_vector_2_processes.jpeg" alt="Distributed vector with 2 processes" width="850">
-</p>
-
-#### Distribution — 4 Processes
-
-<p align="center">
-  <img src="screenshots/distributed_vector_4_processes.jpeg" alt="Distributed vector with 4 processes" width="850">
-</p>
-
-#### Parallel Timing — 1 Process
-
-<p align="center">
-  <img src="screenshots/parallel_time_1_process.jpeg" alt="Parallel timing with 1 process" width="850">
-</p>
-
-#### Parallel Timing — 2 Processes
-
-<p align="center">
-  <img src="screenshots/parallel_time_2_process.jpeg" alt="Parallel timing with 2 processes" width="850">
-</p>
-
-#### Parallel Timing — 4 Processes
-
-<p align="center">
-  <img src="screenshots/parallel_time_4_process.jpeg" alt="Parallel timing with 4 processes" width="850">
-</p>
-
-#### Sequential vs Parallel Timing
-
-<p align="center">
-  <img src="screenshots/comparing_sequential_&_parallel-time.jpeg" alt="Sequential and parallel time comparison" width="850">
-</p>
-
-#### Files Created
-
-<p align="center">
-  <img src="screenshots/files_created.jpeg" alt="Files created during experiment" width="850">
-</p>
-
-</details>
+> The existing filenames above are retained from the original repository so that the README can reference the supplied screenshots directly. The **project terminology and interpretation are OpenMP/threads**, not MPI/processes.
 
 ---
 
 ## Project Structure
 
-The recommended final GitHub repository structure is:
+A clean final repository structure is:
 
 ```text
-Distributed-Vector-Processing-MPI/
+Parallel-Vector-Processing-OpenMP/
 │
 ├── README.md
 │
 ├── src/
-│   ├── vector_mpi.c
+│   ├── vector_openmp.c
 │   └── vector_sequential.c
 │
 ├── graphs/
@@ -752,9 +708,9 @@ Distributed-Vector-Processing-MPI/
     ├── mpi_2_process.jpeg
     ├── mpi_3_processes.jpeg
     ├── mpi_4_processes.jpeg
-    ├── mpi_results.jpeg
     ├── performance_test.jpeg
     ├── sequential_vs_distributed_processing.jpeg
+    ├── mpi_results.jpeg
     ├── distributed_vector_1_processes.jpeg
     ├── distributed_vector_2_processes.jpeg
     ├── distributed_vector_4_processes.jpeg
@@ -766,27 +722,27 @@ Distributed-Vector-Processing-MPI/
     └── nameless.jpeg
 ```
 
-### Purpose of Each Directory
+### Directory Purpose
 
 | Directory | Purpose |
 |---|---|
-| `src/` | C source code for sequential and MPI implementations |
-| `graphs/` | Performance visualizations |
-| `data/` | Structured performance measurements in CSV format |
-| `screenshots/` | Terminal and experiment evidence |
+| `src/` | C source code |
+| `graphs/` | Performance graphs |
+| `data/` | Performance measurements |
+| `screenshots/` | Execution and experiment evidence |
 | Root | Main project documentation |
 
 ---
 
 ## How to Build and Run
 
-The following procedure is intended for a fresh Ubuntu 24.04 environment with Open MPI and GCC installed.
+The following procedure is intended for Ubuntu 24.04 with GCC and OpenMP support installed.
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/Distributed-Vector-Processing-MPI.git
-cd Distributed-Vector-Processing-MPI
+git clone https://github.com/<your-username>/Parallel-Vector-Processing-OpenMP.git
+cd Parallel-Vector-Processing-OpenMP
 ```
 
 Replace `<your-username>` with the GitHub account that owns the repository.
@@ -803,14 +759,7 @@ cd src
 gcc --version
 ```
 
-### 4. Verify Open MPI
-
-```bash
-mpicc --version
-mpirun --version
-```
-
-### 5. Compile the Sequential Program
+### 4. Compile the Sequential Program
 
 ```bash
 gcc vector_sequential.c -o vector_sequential
@@ -822,49 +771,39 @@ Run it:
 ./vector_sequential
 ```
 
-### 6. Compile the MPI Program
+### 5. Compile the OpenMP Program
+
+OpenMP support is enabled with the `-fopenmp` compiler flag:
 
 ```bash
-mpicc vector_mpi.c -o vector_mpi
+gcc -fopenmp vector_openmp.c -o vector_openmp
 ```
 
-### 7. Run with 2 MPI Processes
-
-For a normal non-root user:
+### 6. Run with 2 Threads
 
 ```bash
-mpirun -np 2 ./vector_mpi
+OMP_NUM_THREADS=2 ./vector_openmp
 ```
 
-If the Ubuntu environment is running MPI as `root`, Open MPI may require:
+### 7. Run with 3 Threads
 
 ```bash
-mpirun --allow-run-as-root -np 2 ./vector_mpi
+OMP_NUM_THREADS=3 ./vector_openmp
 ```
 
-### 8. Run with 3 MPI Processes
+### 8. Run with 4 Threads
 
 ```bash
-mpirun --allow-run-as-root -np 3 ./vector_mpi
+OMP_NUM_THREADS=4 ./vector_openmp
 ```
-
-### 9. Run with 4 MPI Processes
-
-```bash
-mpirun --allow-run-as-root -np 4 ./vector_mpi
-```
-
-> If MPI reports that the requested process count exceeds the available slots, use an appropriate VM CPU allocation or, only when appropriate for the environment, run with the MPI configuration option that permits oversubscription.
 
 ---
 
-## Reproducibility Procedure
+## Reproducibility
 
-To reproduce the reported experiment more reliably, follow the same procedure for every configuration.
+To reproduce the documented experiment:
 
-### Step 1 — Use the same vector size
-
-Keep the input fixed at:
+### Step 1 — Keep the input fixed
 
 ```text
 N = 1,000,000
@@ -872,103 +811,91 @@ N = 1,000,000
 
 ### Step 2 — Run the sequential version several times
 
-The documented experiment used four sequential timing runs.
+Record the execution time for each run and calculate the average.
 
-Record each timing and calculate the arithmetic mean.
+### Step 3 — Run the OpenMP version
 
-### Step 3 — Run the MPI program with the selected process counts
-
-At minimum:
+Test:
 
 ```text
-2 processes
-4 processes
+1 thread
+2 threads
+3 threads
+4 threads
 ```
 
-The repository also contains evidence for 3 processes.
+### Step 4 — Keep the environment consistent
 
-### Step 4 — Keep the execution environment consistent
-
-Do not change the following between comparisons:
+Keep the following unchanged during comparison:
 
 - VM CPU allocation
 - VM memory allocation
 - operating system
-- compiler / MPI implementation
+- compiler
+- source code
 - vector size
-- program source code
-- optimization settings
+- compiler flags
 - background workload, as far as practical
 
 ### Step 5 — Repeat measurements
 
-A more reliable benchmark should run each configuration multiple times instead of relying on one timing observation.
+Running every configuration multiple times gives more reliable performance results.
 
-### Step 6 — Calculate statistics
+### Step 6 — Record statistics
 
-For every configuration, report at least:
+For every configuration, report:
 
-- minimum time,
-- maximum time,
-- average time,
-- speedup,
-- parallel efficiency.
-
-This reduces the effect of temporary system load and scheduling variation.
+- minimum time
+- maximum time
+- average time
+- speedup
+- parallel efficiency
 
 ---
 
 ## Results Interpretation
 
-### What the experiment proves
+### What the Experiment Demonstrates
 
-The experiment successfully proves that MPI can:
+The experiment demonstrates that OpenMP can:
 
-- launch multiple processes,
-- identify process ranks,
-- distribute a workload,
-- execute local computation independently,
-- combine partial results, and
-- produce the same final result as the sequential implementation.
+- create multiple threads,
+- divide loop iterations among threads,
+- perform computations concurrently,
+- combine partial results using reduction,
+- produce the same final result as the sequential implementation, and
+- provide measurable performance data.
 
-### What the experiment does not prove
+### What the Current Measurements Do Not Prove
 
 The current measurements do **not** prove that:
 
-- 4 processes are always faster than 2 processes,
-- MPI is always faster than sequential execution, or
-- adding more processes always improves scalability.
+- 4 threads are always faster than 2 threads,
+- OpenMP is always faster than sequential execution, or
+- increasing the thread count always improves scalability.
 
-Those conclusions would require significantly larger workloads and a wider range of carefully controlled benchmarks.
+Those conclusions require larger workloads and more controlled benchmarking.
 
-### Main observation
+### Main Observation
 
-The strongest result from this experiment is actually the relationship between **workload size and parallelization overhead**.
-
-For a simple sum over one million elements, the computation is too lightweight for the tested MPI configurations to overcome their coordination costs inside the current VM environment.
+For a simple sum over one million elements, the computational work is very small. In the current environment, the overhead associated with parallel execution outweighs the performance benefit of using additional threads.
 
 ---
 
 ## Limitations
 
-This experiment has several limitations that should be acknowledged in an academic report or viva:
-
-1. **Small workload relative to MPI overhead** — one million integer additions are completed very quickly.
-2. **Virtualized environment** — VMware can introduce additional execution and scheduling overhead.
-3. **Limited process counts** — only a small number of process configurations were benchmarked.
-4. **Single-machine execution** — the current experiment demonstrates process-level MPI execution on one VM rather than a multi-node cluster.
-5. **Limited repetition for parallel timings** — the documented parallel values represent the supplied test measurements and are not a large statistical benchmark.
-6. **Potential system noise** — CPU scheduling, background applications and VM resource contention can affect very small timings.
+1. **Small workload** — one million simple additions execute very quickly.
+2. **Virtualized environment** — VMware may introduce additional scheduling overhead.
+3. **Limited thread counts** — only a small number of configurations were tested.
+4. **Simple computation** — vector summation has low computational intensity.
+5. **Limited statistical repetition** — the documented measurements are based on the supplied experimental runs.
+6. **System noise** — background applications and CPU scheduling can affect very small timings.
 
 ---
 
 ## Future Improvements
 
-The project can be extended into a stronger parallel-computing benchmark by adding:
-
-### 1. Larger datasets
-
-Test:
+### 1. Test Larger Datasets
 
 ```text
 1,000,000
@@ -977,35 +904,33 @@ Test:
 100,000,000+
 ```
 
-A larger workload increases the amount of useful computation relative to fixed MPI overhead.
+Larger workloads make the useful computation more significant relative to parallel overhead.
 
-### 2. More process configurations
-
-Compare:
+### 2. Test More Thread Counts
 
 ```text
 1, 2, 4, 8, 16, ...
 ```
 
-subject to available CPU resources.
+The practical limit depends on the CPU resources available to the system or VM.
 
-### 3. Repeated benchmarking
+### 3. Repeat the Benchmark
 
-Run each configuration 10–30 times and report mean and standard deviation.
+Run each configuration multiple times and report the mean and standard deviation.
 
-### 4. Automatic performance analysis
+### 4. Automate Performance Analysis
 
-Extend the program or a Python analysis script to automatically generate:
+Automatically generate:
 
-- execution-time plots,
-- speedup plots,
-- efficiency plots,
-- scalability curves,
+- execution-time graphs,
+- speedup graphs,
+- efficiency graphs,
+- scalability curves, and
 - workload-distribution charts.
 
-### 5. More vector operations
+### 5. Add More Vector Operations
 
-The same MPI framework can be extended to calculate:
+The same OpenMP framework can be extended to:
 
 - sum,
 - minimum,
@@ -1014,54 +939,56 @@ The same MPI framework can be extended to calculate:
 - dot product,
 - element-wise transformations.
 
-### 6. Multi-machine MPI
+### 6. Analyze Parallel Overhead Separately
 
-The strongest extension would be to execute MPI processes across two or more physical computers connected over a network. This would demonstrate the distributed-memory model more directly.
-
-### 7. Communication analysis
-
-Measure separately:
+Measure:
 
 ```text
-Computation time
-Data distribution time
-Reduction time
+Serial setup time
+Parallel computation time
+Synchronization / reduction overhead
 Total execution time
 ```
 
-This would make the impact of MPI overhead visible rather than treating it as one combined number.
+This makes it easier to identify where the parallel execution time is being spent.
 
 ---
 
 ## Learning Outcomes
 
-By completing this project, a student should be able to explain:
+After completing this project, a student should be able to explain:
 
-- what MPI is and why it is used,
-- the role of an MPI rank,
+- what OpenMP is and why it is used,
 - the difference between a process and a thread,
-- how `MPI_Comm_size()` and `MPI_Comm_rank()` work,
-- how collective communication differs from ordinary function calls,
-- how `MPI_Scatter()` distributes data,
-- how `MPI_Reduce()` aggregates data,
-- why communication and synchronization have performance costs,
+- the shared-memory programming model,
+- how an OpenMP parallel region works,
+- how a parallel loop divides iterations,
+- how reduction combines partial results,
+- why synchronization has a performance cost,
+- how execution time is measured,
 - how speedup is calculated,
 - how parallel efficiency is calculated, and
-- why real-world parallel systems require workload sizes large enough to amortize overhead.
+- why workload size is important for achieving useful parallel performance.
+
+---
+
+## Viva Summary
+
+> **“Our project implements parallel vector processing using OpenMP in C. We create a vector containing one million elements and first calculate its sum sequentially. We then use OpenMP to divide the vector-processing loop among multiple threads and combine the partial sums using a reduction operation. We compare the sequential execution with different OpenMP thread configurations. In our documented VMware environment, the sequential average was 0.001968 seconds, while the 2-thread and 4-thread executions took 0.002783 and 0.003888 seconds respectively. The OpenMP versions were slower because the computation is very simple and small, while thread management, scheduling, synchronization, reduction, and virtualization introduce overhead. The main lesson is that parallelism does not automatically produce speedup; the workload must be large enough to justify the overhead of parallel execution.”**
 
 ---
 
 ## Conclusion
 
-This project demonstrates a complete MPI-based distributed vector-processing workflow in C.
+This project demonstrates a complete **OpenMP-based parallel vector-processing workflow in C**.
 
-A vector containing **1,000,000 elements** is processed first sequentially and then through multiple MPI processes. The MPI implementation distributes the vector using `MPI_Scatter()`, performs independent local computation, and combines the partial results using `MPI_Reduce()`.
+A vector containing **1,000,000 elements** is processed sequentially and then using multiple OpenMP threads. The parallel implementation divides the loop workload among threads, performs the computation concurrently, and combines the partial results into a single final sum.
 
-The most important correctness result is:
+The correctness result is:
 
 ```text
-Expected / Sequential / MPI Result
-==================================
+Expected / Sequential / OpenMP Result
+=====================================
 500000500000
 ```
 
@@ -1069,45 +996,26 @@ The documented performance measurements are:
 
 ```text
 Sequential average : 0.001968 s
-2 MPI processes    : 0.002783 s
-4 MPI processes    : 0.003888 s
+2 OpenMP threads   : 0.002783 s
+4 OpenMP threads   : 0.003888 s
 ```
 
-The measured speedups are approximately:
+The measured speedups are:
 
 ```text
-2 processes → 0.707×
-4 processes → 0.506×
+2 threads → 0.707×
+4 threads → 0.506×
 ```
 
-Although the MPI configurations were slower for this particular workload, that outcome is valuable rather than a failure. It demonstrates a fundamental concept in parallel computing: **parallel execution introduces overhead, and useful speedup occurs only when the amount of parallelizable computation is large enough to justify that overhead.**
+Although the OpenMP executions were slower for this particular workload, this result is valuable because it demonstrates a fundamental principle of parallel computing:
 
-The project therefore covers both sides of parallel computing:
+> **Parallel execution introduces overhead, and useful speedup occurs only when the amount of parallelizable computation is large enough to justify that overhead.**
 
-> **How to distribute work** and **how to critically evaluate whether the distribution actually improves performance**.
-
----
-
-## Academic / Viva Summary
-
-A concise explanation for demonstration or viva:
-
-> “Our project implements distributed vector processing using MPI in C. We create a vector of one million elements, divide the vector among multiple MPI processes using `MPI_Scatter`, calculate a local sum independently in each process, and combine the local sums using `MPI_Reduce`. We compare the MPI implementation with a sequential version and measure execution time for different process counts. In our VMware environment, the sequential average was 0.001968 seconds, while the 2-process and 4-process MPI executions took 0.002783 and 0.003888 seconds respectively. The MPI versions were slower because the workload is relatively small and MPI introduces communication, synchronization, process-management, and virtualization overhead. The project therefore demonstrates both MPI-based workload distribution and the practical importance of overhead-aware performance analysis.”
-
----
-
-## Author / Team
-
-**Project:** Distributed Vector Processing using MPI  
-**Language:** C  
-**Parallel Framework:** MPI  
-**MPI Implementation:** Open MPI  
-**Platform:** Ubuntu 24.04 / VMware Workstation  
-**Repository:** GitHub
+The project therefore demonstrates both **how to parallelize a workload using OpenMP** and **how to evaluate whether parallelization actually improves performance**.
 
 ---
 
 <p align="center">
-  <b>Distributed Vector Processing using MPI</b><br>
-  Parallel Computing • MPI • C • Performance Analysis
+  <b>Parallel Vector Processing using OpenMP</b><br>
+  Parallel Computing • OpenMP • C • Performance Analysis
 </p>
